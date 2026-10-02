@@ -15,13 +15,35 @@ library(tidyverse)
 
 ### Problem 1
 
-Read and clean data, retain line, staion, name, station latitude / longitude, routes served, entry, vending, entrance type, and ADA compliance. Convert Yes and No to logical variable.
+Read and clean data, retain line, station, name, station latitude / longitude, routes served, entry, vending, entrance type, and ADA compliance. Convert Yes and No to logical variable.
 
 ```{r}
 
 transit_df = 
   read_csv("./data/NYC_Transit_Subway_Entrance_And_Exit_Data.csv", 
-           na = "")
+           na = "") |>
+           janitor::clean_names() |>
+  select(line:entry, vending, entrance_type, ada) |>
+  mutate(
+    entry = case_match(
+      entry,
+      "YES" ~ TRUE,
+      "NO" ~ FALSE),
+    entry = as.logical(entry),
+    vending = case_match(
+      vending,
+      "YES" ~ TRUE,
+      "NO" ~ FALSE),
+    )
+
+# entry and vending have YES and NO values
 
 view(transit_df)
+```
+line represents the physical subway line the subway route runs through, such as the West End, or Jerome in the Bronx. station_name indicates the name of a single station on the on the line. Each route column indicates whether or not this station/ line services a particular route, such as the Q train, or 4/5/6 trains. station_latitude / longitude indicates the location of the subway station. Entrance indiocates the station's entrance type. Entry indicates whether or not the entrance type is also a point of entry. Vending indicates if there is a MTA card vending machine in the station and ada notes whether or not it is ADA (Americans with Disabilities Act) compliant. So far, I have set NA values to be be blank spaces, cleaned the column names to be all lower case and standardized with `janitor::clean_names()`, selected the columns of interest with `select()`, and used the `mutate()` function to transform the character variables in entry and vending to logical variables.
+
+```{r}
+
+
+
 ```
