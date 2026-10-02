@@ -34,16 +34,72 @@ transit_df =
       vending,
       "YES" ~ TRUE,
       "NO" ~ FALSE),
+    route8 = as.character(route8),
+    route9 = as.character(route9),
+    route10 = as.character(route10),
+    route11 = as.character(route11)
     )
 
 # entry and vending have YES and NO values
 
-view(transit_df)
+# using str(transit_df) in console, found that the route columns variable types don't match, will need the mutate
+
 ```
-line represents the physical subway line the subway route runs through, such as the West End, or Jerome in the Bronx. station_name indicates the name of a single station on the on the line. Each route column indicates whether or not this station/ line services a particular route, such as the Q train, or 4/5/6 trains. station_latitude / longitude indicates the location of the subway station. Entrance indiocates the station's entrance type. Entry indicates whether or not the entrance type is also a point of entry. Vending indicates if there is a MTA card vending machine in the station and ada notes whether or not it is ADA (Americans with Disabilities Act) compliant. So far, I have set NA values to be be blank spaces, cleaned the column names to be all lower case and standardized with `janitor::clean_names()`, selected the columns of interest with `select()`, and used the `mutate()` function to transform the character variables in entry and vending to logical variables.
+line represents the physical subway line the subway route runs through, such as the West End, or Jerome in the Bronx. station_name indicates the name of a single station on the line. Each route column indicates indicates what route is served, such as the Q train, or 4/5/6 trains. If the station services less than 11 routes, the value is NA. station_latitude / longitude indicates the location of the subway station. entrance_type indicates the station's entrance type. Entry indicates whether or not the entrance type is also a point of entry. If false, it is an exit. Vending indicates if there is a MTA card vending machine at the entrance and ada notes whether or not it is ADA (Americans with Disabilities Act) compliant. So far, I have told `read_csv` to treat blank values as NA, cleaned the column names to be all lower case and standardized with `janitor::clean_names()`, selected the columns of interest with `select()`, and used the `mutate()` function to transform the character variables in entry and vending to logical variables. route8, 9, 10, and 11 column types were converted to characters since they are subway route names.
 
 ```{r}
+# number of distinct stations 
 
+transit_df |>
+  distinct(line, station_name) |>
+  nrow()
 
+# number of stations ADA compliant
+
+transit_df |>
+  filter(ada == TRUE) |>
+  distinct(line, station_name) |>
+  nrow()
+
+# proportion of entrances/ exits without vending allow entrance
+
+transit_df |>
+  filter(vending == FALSE) |>
+  pull(entry) |>
+  mean()
 
 ```
+There are 465 distinct stations. 84 stations are ada compliant. The proportion of station entrances/ exits without vending allow entrance is 0.3770492. 
+
+Reformat data so route number and route name are distinct variables
+```{r}
+
+transit_long = 
+  transit_df |> 
+  pivot_longer(
+    route1:route11,
+    names_to = "route_number",
+    names_prefix = "route",
+    values_to = "route_name"
+  )
+
+```
+
+Distinct stations serve the A train. Of those, ADA compliant?
+```{r}
+
+transit_long |> 
+  filter(route_name == "A") |>
+  distinct(line, station_name, route_name) |>
+  nrow()
+
+# ADA compliant
+
+transit_long |>
+  filter(route_name == "A") |>
+  filter(ada == TRUE) |>
+  distinct(line, station_name, route_name) |>
+  nrow()
+
+```
+60 distinct stations serve the A train. Only 17 of these 60 stations are ADA compliant.
