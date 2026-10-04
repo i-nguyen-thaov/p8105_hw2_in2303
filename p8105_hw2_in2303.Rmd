@@ -103,3 +103,55 @@ transit_long |>
 
 ```
 60 distinct stations serve the A train. Only 17 of these 60 stations are ADA compliant.
+
+### Problem 2
+
+```{r}
+trash_df = 
+  readxl:: read_excel(
+  "./data/202509 Trash Wheel Collection Data.xlsx",
+  sheet = "Mr. Trash Wheel",
+  skip = 1, #omit unnecessary rows
+  range = "A2:N710") |>
+  janitor::clean_names() |> #cleaning names
+  filter(!is.na(dumpster)) |> #remove last NA column using dumpster
+  mutate(
+    sports_balls = as.integer(round(sports_balls, digits=0)), #round balls to nearest integer
+    wheel_type = "mr_trash",
+    year = as.integer(year)
+  )
+
+prof_df = 
+  readxl::read_excel(
+    "./data/202509 Trash Wheel Collection Data.xlsx",
+  sheet = "Professor Trash Wheel",
+  skip = 1, 
+  range = "A2:M135") |>
+  janitor::clean_names() |> 
+  filter(!is.na(dumpster)) |> #no sports balls
+  mutate(
+    wheel_type = "professor_trash"
+  )
+
+gwynnda_df = 
+  readxl::read_excel(
+    "./data/202509 Trash Wheel Collection Data.xlsx",
+  sheet = "Gwynns Falls Trash Wheel",
+  skip = 1, 
+  range = "A2:L352") |>
+  janitor::clean_names() |> 
+  filter(!is.na(dumpster)) |>
+  mutate(
+    wheel_type = "gwynnda"
+  )
+
+trash_tidy = 
+  bind_rows(trash_df, prof_df, gwynnda_df) |>
+  relocate(wheel_type) |>
+  mutate(
+    month = str_to_lower(month)
+  )
+
+```
+
+There are `r nrow(trash_tidy)` total observations in the new tidy dataset. Of these `r nrow(trash_tidy)` observations, `r filter(trash_tidy, wheel_type == "mr_trash") |> nrow()` are from Mr. Trash Wheel, `r filter(trash_tidy, wheel_type == "professor_trash") |> nrow()` are from Professor Trash Wheel, and `r filter(trash_tidy, wheel_type == "gwynnda") |> nrow()` are from the Gwynns Falls Trash Wheel. There are `r trash_tidy |> distinct(dumpster, wheel_type) |> nrow()` distinct dumpsters in total. The column month will output all 12 months of the year: `r trash_tidy |> pull(month) |> unique() |> knitr::combine_words()`. The year column contains years between `r trash_tidy |> pull(year) |> min()` and `r trash_tidy |> pull(year) |> max()`  weight_tons lists the total weight of trash collected by the trash wheel at the given observation. Variables such cigarette_butts, bottles, sports_balls, and wrappers count the the amount of each trash type collected by the trash wheel at the time of observation. The total weight of trash collected by Professor Trash Wheel was `r trash_tidy |> filter(wheel_type == "professor_trash") |> pull(weight_tons) |> sum()` tons. In June of 2022, Gwynnda collected `r trash_tidy |> filter(wheel_type == "gwynnda", month == "june", year == 2022) |> pull(cigarette_butts) |> sum() |> format(scientific = FALSE, big.mark = ",")` cigarette butts.
