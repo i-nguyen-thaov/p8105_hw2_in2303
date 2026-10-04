@@ -215,6 +215,12 @@ Joining datasets, ensuring that only participants who appear in both datasets ar
 mci_clean = 
   inner_join(mci_bsl_tidy, amyloid_df, by = "id")
 ```
-The resulting combined data set has data on `r nrow(mci_clean)` participants.
+The resulting combined data set has data on `r nrow(mci_clean)` participants. The resulting dataset includes baseline values while also adding biomarker data to each corresponding participant id. 
+
+Downloading as a CSV
+```{r}
+write_csv(mci_clean, "mci_clean.csv")
+```
+
 
 
