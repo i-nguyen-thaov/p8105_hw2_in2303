@@ -155,3 +155,66 @@ trash_tidy =
 ```
 
 There are `r nrow(trash_tidy)` total observations in the new tidy dataset. Of these `r nrow(trash_tidy)` observations, `r filter(trash_tidy, wheel_type == "mr_trash") |> nrow()` are from Mr. Trash Wheel, `r filter(trash_tidy, wheel_type == "professor_trash") |> nrow()` are from Professor Trash Wheel, and `r filter(trash_tidy, wheel_type == "gwynnda") |> nrow()` are from the Gwynns Falls Trash Wheel. There are `r trash_tidy |> distinct(dumpster, wheel_type) |> nrow()` distinct dumpsters in total. The column month will output all 12 months of the year: `r trash_tidy |> pull(month) |> unique() |> knitr::combine_words()`. The year column contains years between `r trash_tidy |> pull(year) |> min()` and `r trash_tidy |> pull(year) |> max()`  weight_tons lists the total weight of trash collected by the trash wheel at the given observation. Variables such cigarette_butts, bottles, sports_balls, and wrappers count the the amount of each trash type collected by the trash wheel at the time of observation. The total weight of trash collected by Professor Trash Wheel was `r trash_tidy |> filter(wheel_type == "professor_trash") |> pull(weight_tons) |> sum()` tons. In June of 2022, Gwynnda collected `r trash_tidy |> filter(wheel_type == "gwynnda", month == "june", year == 2022) |> pull(cigarette_butts) |> sum() |> format(scientific = FALSE, big.mark = ",")` cigarette butts.
+
+### Problem 3
+
+Importing and cleaning the MCI baseline dataset
+```{r}
+mci_bsl = read.csv(
+  "./data/MCI_baseline.csv",
+  skip = 1,
+  na = "."
+  ) |>
+  janitor::clean_names() |>
+  mutate(
+    sex = case_match(
+      sex,
+      1 ~ "male",
+      0 ~ "female"),
+    apoe4 = as.logical(apoe4)
+    )
+
+mci_bsl_tidy =
+  mci_bsl |>
+  filter(
+    current_age < age_at_onset |
+    is.na(age_at_onset)) |>
+  mutate(
+    id = as.character(id))
+
+```
+
+To clean the imported baseline dataset, first, we have to skip the first row of the csv file usign `skip = 1`, since this row acts as a dictionary for the columns, and is not relevant to anaylsis. Second, "." in the csv files was instructed to be treated as NA values. The sex variable was tranformed to character variables "male" and "female" instead of integers. apoe4, which notes APOE4 carrier status, was changed to be a TRUE/FALSE logical variable. In order to filter for the exclusion criteria, we must exclude study individuals that report MCI before or at the same age as the current age of enrollment. So, the `filter` function was used to keep individuals whose age at enrollment was less than the age of MCI onset as well as those who did not have an age of MCI onset recorded. `r nrow(mci_bsl)` participants originally enrolled in the study. Of the `r nrow(mci_bsl)` participants, `r  nrow(mci_bsl) - nrow(mci_bsl_tidy)` were excluded from the study. From this remaining cohort, `r mci_bsl_tidy |> filter(!is.na(age_at_onset)) |> nrow()` participants eventually developed MCI. After exclusion, the average baseline age was `r mci_bsl_tidy |> pull(current_age) |> mean()` years and the proportion of women in the study that are APOE4 carriers is `r mci_bsl_tidy |> filter(sex == "female") |> pull(apoe4) |> mean() * 100`% of them.
+
+Import, clean, and tidy longitudinal biomarker values
+```{r}
+amyloid_df = 
+  read_csv(
+    "./data/mci_amyloid.csv",
+    skip = 1,
+    na = c("NA", "Na")
+    ) |>
+  janitor::clean_names() |>
+  mutate(
+    study_id = as.character(study_id)
+  ) |>
+  rename(id = study_id)
+
+```
+
+Check whether some participants appear only in one dataset
+```{r}
+anti_join(mci_bsl_tidy, amyloid_df, by = "id")
+anti_join(amyloid_df, mci_bsl_tidy, by = "id")
+```
+
+`r nrow(anti_join(mci_bsl_tidy, amyloid_df, by = "id"))` participants appear in the baseline but not in the follow up period. `r nrow(anti_join(amyloid_df, mci_bsl_tidy, by = "id"))` appear in the follow up period but not at baseline.
+
+Joining datasets, ensuring that only participants who appear in both datasets are retained.
+```{r}
+mci_clean = 
+  inner_join(mci_bsl_tidy, amyloid_df, by = "id")
+```
+The resulting combined data set has data on `r nrow(mci_clean)` participants.
+
+
