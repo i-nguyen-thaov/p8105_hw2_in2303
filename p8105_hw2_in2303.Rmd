@@ -147,7 +147,7 @@ trash_tidy =
 
 ```
 
-There are `r nrow(trash_tidy)` total observations in the new tidy dataset. Of these `r nrow(trash_tidy)` observations, `r filter(trash_tidy, wheel_type == "mr_trash") |> nrow()` are from Mr. Trash Wheel, `r filter(trash_tidy, wheel_type == "professor_trash") |> nrow()` are from Professor Trash Wheel, and `r filter(trash_tidy, wheel_type == "gwynnda") |> nrow()` are from the Gwynns Falls Trash Wheel. There are `r trash_tidy |> distinct(dumpster, wheel_type) |> nrow()` distinct dumpsters in total. The column month will output all 12 months of the year: `r trash_tidy |> pull(month) |> unique() |> knitr::combine_words()`. The year column contains years between `r trash_tidy |> pull(year) |> min()` and `r trash_tidy |> pull(year) |> max()`  weight_tons lists the total weight of trash collected by the trash wheel at the given observation. Variables such cigarette_butts, bottles, sports_balls, and wrappers count the the amount of each trash type collected by the trash wheel at the time of observation. The total weight of trash collected by Professor Trash Wheel was `r trash_tidy |> filter(wheel_type == "professor_trash") |> pull(weight_tons) |> sum()` tons. In June of 2022, Gwynnda collected `r trash_tidy |> filter(wheel_type == "gwynnda", month == "june", year == 2022) |> pull(cigarette_butts) |> sum() |> format(scientific = FALSE, big.mark = ",")` cigarette butts.
+There are `r nrow(trash_tidy)` total observations in the new tidy dataset. Of these `r nrow(trash_tidy)` observations, `r filter(trash_tidy, wheel_type == "mr_trash") |> nrow()` are from Mr. Trash Wheel, `r filter(trash_tidy, wheel_type == "professor_trash") |> nrow()` are from Professor Trash Wheel, and `r filter(trash_tidy, wheel_type == "gwynnda") |> nrow()` are from the Gwynns Falls Trash Wheel. There are `r trash_tidy |> distinct(dumpster, wheel_type) |> nrow()` distinct dumpsters in total. The column month will output all 12 months of the year: `r trash_tidy |> pull(month) |> unique() |> knitr::combine_words()`. The year column contains years between `r trash_tidy |> pull(year) |> min()` and `r trash_tidy |> pull(year) |> max()`. weight_tons lists the total weight of trash collected by the trash wheel at the given observation. Variables such as cigarette_butts, sports_balls, and wrappers count the the amount of each trash type collected by the trash wheel at the time of observation. The total weight of trash collected by Professor Trash Wheel was `r trash_tidy |> filter(wheel_type == "professor_trash") |> pull(weight_tons) |> sum()` tons. In June of 2022, Gwynnda collected `r trash_tidy |> filter(wheel_type == "gwynnda", month == "june", year == 2022) |> pull(cigarette_butts) |> sum() |> format(scientific = FALSE, big.mark = ",")` cigarette butts.
 
 ### Problem 3
 
@@ -177,7 +177,7 @@ mci_bsl_tidy =
 
 ```
 
-The MCI_baseline.csv file contains a file of participants' demographic data with study id to code for each person. When importing the csv, first, we have to skip the first row of the csv file using `skip = 1`, since this row acts as a dictionary for the columns, and is not relevant to our potential anaylsis. Second, "." in the csv files was instructed to be treated as NA values. The sex variable was transformed to character variables "male" and "female" instead of integers. apoe4, which notes APOE4 carrier status, was changed to be a TRUE/FALSE logical variable. In order to filter for the exclusion criteria, we must exclude study individuals that report MCI before or at the same age as the current age of enrollment. So, the `filter` function was used to keep individuals whose age at enrollment was less than the age of MCI onset as well as those who did not have an age of MCI onset recorded. `r nrow(mci_bsl)` participants originally enrolled in the study. Of the `r nrow(mci_bsl)` participants, `r  nrow(mci_bsl) - nrow(mci_bsl_tidy)` were excluded from the study. From this remaining cohort, `r mci_bsl_tidy |> filter(!is.na(age_at_onset)) |> nrow()` participants eventually developed MCI. After exclusion, the average baseline age was `r mci_bsl_tidy |> pull(current_age) |> mean()` years and the proportion of women in the study that are APOE4 carriers is `r mci_bsl_tidy |> filter(sex == "female") |> pull(apoe4) |> mean() * 100`% of them.
+The MCI_baseline.csv file contains a file of participants' demographic data with study id to code for each person. When importing the csv, first, we have to skip the first row of the csv file using `skip = 1`, since this row acts as a dictionary for the columns, and is not relevant to our potential analysis. Second, "." in the csv files was instructed to be treated as NA values. The sex variable was transformed to character variables "male" and "female" instead of integers. apoe4, which notes APOE4 carrier status, was changed to be a TRUE/FALSE logical variable. In order to filter for the exclusion criteria, we must exclude study individuals that report MCI before or at the same age as the current age of enrollment. So, the `filter` function was used to keep individuals whose age at enrollment was less than the age of MCI onset as well as those who did not have an age of MCI onset recorded. `r nrow(mci_bsl)` participants originally enrolled in the study. Of the `r nrow(mci_bsl)` participants, `r  nrow(mci_bsl) - nrow(mci_bsl_tidy)` were excluded from the study. From this remaining cohort, `r mci_bsl_tidy |> filter(!is.na(age_at_onset)) |> nrow()` participants eventually developed MCI. After exclusion, the average baseline age was `r mci_bsl_tidy |> pull(current_age) |> mean() |> round(1)` years and the proportion of women in the study that are APOE4 carriers is `r mci_bsl_tidy |> filter(sex == "female") |> pull(apoe4) |> mean() * 100`%.
 
 ##### Import, clean, and tidy longitudinal biomarker values
 ```{r}
@@ -191,16 +191,21 @@ amyloid_df =
   mutate(
     study_id = as.character(study_id)
   ) |>
-  rename(id = study_id) |>
+  rename(
+    id = study_id,
+    time_0 = baseline)
+
+amyloid_df = 
+  amyloid_df |>
   pivot_longer(
-    time_2:time_8,
+    time_0:time_8,
     names_to = "timepoint",
     names_prefix = "time_",
     values_to = "amyloid"
   )
 
 ```
-__Note on amyloid data__: Conceptually, participant ID's are labels/ nominal categorical variables. So, they should be character variables. Also, anticipating dataset combining, I changed the _study_id_ column name to simply _id_. For the time variables, the same concept as the route variables in problem 1 applies. Time variables have been converted to long format so that the time and amyloid $\beta$ 42/40 ratio variables are separate columns.
+__Note on amyloid data__: Conceptually, participant ID's are labels/ nominal categorical variables. So, they should be character variables. Also, anticipating dataset combining, I changed the _study_id_ column name to simply _id_. For the time variables, the same concept as the route variables in problem 1 applies. Time variables have been converted to long format so that the time and amyloid $\beta$ 42/40 ratio variables are separate columns. Baseline was coded to time 0. 
 
 ##### Check whether some participants appear only in one dataset
 ```{r}
@@ -215,7 +220,7 @@ anti_join(amyloid_df, mci_bsl_tidy, by = "id")
 mci_clean = 
   inner_join(mci_bsl_tidy, amyloid_df, by = "id")
 ```
-The resulting combined data set has data on `r mci_clean |> pull(id) |> n_distinct()` participants. The dimensions are `r nrow(mci_clean)` rows and `r ncol(mci_clean)` columns. The resulting dataset includes baseline values while also adding biomarker data to each corresponding participant ID. 
+The resulting combined data set has data on `r mci_clean |> pull(id) |> n_distinct()` participants. The dimensions are `r nrow(mci_clean)` rows and `r ncol(mci_clean)` columns. The resulting dataset includes baseline demographic values while also adding biomarker data to each corresponding participant ID. 
 
 Downloading as a CSV
 ```{r}
