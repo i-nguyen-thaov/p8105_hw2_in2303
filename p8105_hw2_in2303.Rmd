@@ -105,9 +105,9 @@ transit_long |>
 ```{r}
 trash_df = 
   readxl:: read_excel(
-  "./data/202509 Trash Wheel Collection Data.xlsx",
+  "./data/202610 Trash Wheel Collection Data.xlsx",
   sheet = "Mr. Trash Wheel",
-  range = "A2:N710") |>
+  range = "A2:N742") |>
   janitor::clean_names() |> #cleaning names
   filter(!is.na(dumpster)) |> #remove last NA column using dumpster
   mutate(
@@ -118,20 +118,21 @@ trash_df =
 
 prof_df = 
   readxl::read_excel(
-    "./data/202509 Trash Wheel Collection Data.xlsx",
+    "./data/202610 Trash Wheel Collection Data.xlsx",
   sheet = "Professor Trash Wheel",
-  range = "A2:M135") |>
+  range = "A2:M139") |>
   janitor::clean_names() |> 
   filter(!is.na(dumpster)) |> #no sports balls
   mutate(
+    plastic_bottles = as.numeric(plastic_bottles),
     wheel_type = "professor_trash"
   )
 
 gwynnda_df = 
   readxl::read_excel(
-    "./data/202509 Trash Wheel Collection Data.xlsx",
-  sheet = "Gwynns Falls Trash Wheel",
-  range = "A2:L352") |>
+    "./data/202610 Trash Wheel Collection Data.xlsx",
+  sheet = "Gwynnda the Good Wheel of the W",
+  range = "A2:L394") |>
   janitor::clean_names() |> 
   filter(!is.na(dumpster)) |>
   mutate(
